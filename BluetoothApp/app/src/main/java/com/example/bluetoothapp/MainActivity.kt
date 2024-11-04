@@ -15,14 +15,28 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -55,25 +69,41 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BluetoothAppTheme {
-                Column (verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxSize()) {
-                    Button (onClick = {
-                        println("Connect clicked")
-                        setupBluetooth()
-                    },
-                        modifier = Modifier.padding(16.dp, 16.dp)
-                    ) {
-                        Text("Connect to HC-06")
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+//                    color = Color.LightGray
+                ) {
+                    Row (horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier.fillMaxWidth()
+                                           .padding(vertical = 64.dp)) {
+                        Button (onClick = {
+                            println("Connect clicked")
+                            setupBluetooth()
+                        },
+                            modifier = Modifier.padding(16.dp, 16.dp)
+                        ) {
+                            Text("Connect")
+                        }
+                        Button (onClick =  {
+                            println("Disconnect clicked")
+                            bluetoothSocket?.close()
+                        },
+                            modifier = Modifier.padding(16.dp, 16.dp)
+                        ) {
+                            Text("Disconnect")
+                        }
                     }
-                    Button (onClick =  {
-                        println("Disconnect clicked")
-                        bluetoothSocket?.close()
-                    },
-                        modifier = Modifier.padding(16.dp, 16.dp)
-                    ) {
-                        Text("Disconnect")
-                    }
+//                    Greeting("up")
+                    Test1("down")
+//                    TitleCardColumn()
+//                    Person("david")
+//                    Person("dat")
+                    Person("cassandra")
+//                    SimpleFilledTextFieldSample()
+//                    Person("tyler")
+                    Zones()
                 }
             }
         }
@@ -84,7 +114,6 @@ class MainActivity : ComponentActivity() {
             // Permissions are already granted
             println("Perms granted")
         }
-
     }
 
     private val handler = object : Handler(Looper.getMainLooper()) {
@@ -157,5 +186,102 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         bluetoothSocket?.close()
+    }
+}
+
+@Composable
+fun Person(username: String, modifier: Modifier = Modifier) {
+    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (username != "david") {
+                Icon(Icons.Filled.AccountCircle, contentDescription = null)
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.squirrelicon2),
+                    contentDescription = null,
+//                    modifier = Modifier.background(Color.Black)
+                )
+            }
+            if (username != "tyler") {
+                Text("$username")
+            } else {
+                Text("lol")
+            }
+        }
+    }
+}
+
+@Composable
+fun Test1(txt: String, modifier: Modifier = Modifier) {
+    Row (verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Center) {
+        val width = 200
+        val height = 375
+        Box() {
+            val imageModifier = Modifier
+                .width(width.dp)
+                .height(height.dp)
+//                .border(BorderStroke(1.dp, Color.Black))
+            Image(
+                painter = painterResource(id = R.drawable.zone3),
+                modifier = imageModifier,
+                contentDescription = null
+            )
+
+        }
+        Box() {
+            val imageModifier = Modifier
+                .width(width.dp)
+                .height(height.dp)
+//                .border(BorderStroke(1.dp, Color.Black))
+//                .background(Color.Yellow)
+            Image(
+                painter = painterResource(id = R.drawable.zone1),
+                modifier = imageModifier,
+                contentDescription = null
+            )
+
+        }
+    }
+}
+
+@Composable
+fun Zones(modifier: Modifier = Modifier) {
+//    Column (modifier = modifier.padding(56.dp),
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//        verticalArrangement = Arrangement.Center) {
+//        Row() {
+//            Image(
+//                painter = painterResource(id = R.drawable.zone1),
+//                contentDescription = null)
+////                contentScale = ContentScale.Fit)
+//            Image(
+//                painter = painterResource(id = R.drawable.zone1),
+//                contentDescription = null)
+////                contentScale = ContentScale.Fit)
+//        }
+//        Row {
+//            Image(
+//                painter = painterResource(id = R.drawable.zone1),
+//                contentDescription = null)
+////                contentScale = ContentScale.Fit)
+//            Image(
+//                painter = painterResource(id = R.drawable.zone1),
+//                contentDescription = null)
+//                contentScale = ContentScale.Fit)
+//        }
+//    }
+    Column(verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
+        val imageModifier = Modifier
+            .size(340.dp)
+//                .border(BorderStroke(1.dp, Color.Black))
+//                .background(Color.Yellow)
+        Image(
+            painter = painterResource(id = R.drawable.zone2),
+            contentDescription = null,
+            modifier = imageModifier
+        )
     }
 }
