@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "Customs")(type "KiCad")(uri "${KIPRJMOD}/Symbols/Customs.kicad_sym")(options "")(descr ""))
+  (lib (name "teensy")(type "KiCad")(uri "${KIPRJMOD}/Symbols/teensy.kicad_sym")(options "")(descr ""))
+)
