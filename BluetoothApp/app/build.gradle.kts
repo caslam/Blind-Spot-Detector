@@ -6,7 +6,6 @@ plugins {
 
 android {
     namespace = "com.example.bluetoothapp"
-    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.bluetoothapp"
@@ -37,6 +36,7 @@ android {
     buildFeatures {
         compose = true
     }
+    compileSdk = 34
 }
 
 dependencies {

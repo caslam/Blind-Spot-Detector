@@ -15,7 +15,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,8 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.bluetoothapp.domain.BluetoothService
@@ -74,6 +78,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
 //                    color = Color.LightGray
                 ) {
+                    var test : Int = 0
                     Row (horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.Top,
                         modifier = Modifier.fillMaxWidth()
@@ -94,13 +99,20 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Text("Disconnect")
                         }
+                        Button (onClick = {
+                            test += 1;
+                        },
+                            modifier = Modifier.padding(16.dp, 16.dp)
+                        ) {
+                            Text("uh")
+                        }
                     }
 //                    Greeting("up")
-                    Test1("down")
+                    Test1("down",1, 0)
 //                    TitleCardColumn()
-//                    Person("david")
+                    Person("david")
 //                    Person("dat")
-                    Person("cassandra")
+//                    Person("cassandra")
 //                    SimpleFilledTextFieldSample()
 //                    Person("tyler")
                     Zones()
@@ -191,8 +203,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Person(username: String, modifier: Modifier = Modifier) {
+    val imageModifier = Modifier
+        .size(200.dp)
+        .border(BorderStroke(1.dp, Color.Black))
     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Column(
+            modifier = imageModifier,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -215,7 +231,9 @@ fun Person(username: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun Test1(txt: String, modifier: Modifier = Modifier) {
+fun Test1(txt: String,
+          l_state : Int, r_state: Int,
+          modifier: Modifier = Modifier) {
     Row (verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Center) {
         val width = 200
         val height = 375
@@ -223,25 +241,40 @@ fun Test1(txt: String, modifier: Modifier = Modifier) {
             val imageModifier = Modifier
                 .width(width.dp)
                 .height(height.dp)
-//                .border(BorderStroke(1.dp, Color.Black))
-            Image(
-                painter = painterResource(id = R.drawable.zone3),
-                modifier = imageModifier,
-                contentDescription = null
-            )
-
+                .border(BorderStroke(1.dp, Color.Black))
+            if (l_state == 0) {
+                Image(
+                    painter = painterResource(id = R.drawable.zone3),
+                    modifier = imageModifier,
+                    contentDescription = null
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.zone6),
+                    modifier = imageModifier,
+                    contentDescription = null
+                )
+            }
         }
         Box() {
             val imageModifier = Modifier
                 .width(width.dp)
                 .height(height.dp)
-//                .border(BorderStroke(1.dp, Color.Black))
+                .border(BorderStroke(1.dp, Color.Black))
 //                .background(Color.Yellow)
-            Image(
-                painter = painterResource(id = R.drawable.zone1),
-                modifier = imageModifier,
-                contentDescription = null
-            )
+            if (r_state == 0) {
+                Image(
+                    painter = painterResource(id = R.drawable.zone1),
+                    modifier = imageModifier,
+                    contentDescription = null
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.zone4),
+                    modifier = imageModifier,
+                    contentDescription = null
+                )
+            }
 
         }
     }
@@ -249,35 +282,10 @@ fun Test1(txt: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun Zones(modifier: Modifier = Modifier) {
-//    Column (modifier = modifier.padding(56.dp),
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.Center) {
-//        Row() {
-//            Image(
-//                painter = painterResource(id = R.drawable.zone1),
-//                contentDescription = null)
-////                contentScale = ContentScale.Fit)
-//            Image(
-//                painter = painterResource(id = R.drawable.zone1),
-//                contentDescription = null)
-////                contentScale = ContentScale.Fit)
-//        }
-//        Row {
-//            Image(
-//                painter = painterResource(id = R.drawable.zone1),
-//                contentDescription = null)
-////                contentScale = ContentScale.Fit)
-//            Image(
-//                painter = painterResource(id = R.drawable.zone1),
-//                contentDescription = null)
-//                contentScale = ContentScale.Fit)
-//        }
-//    }
     Column(verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
         val imageModifier = Modifier
             .size(340.dp)
-//                .border(BorderStroke(1.dp, Color.Black))
-//                .background(Color.Yellow)
+            .border(BorderStroke(1.dp, Color.Black))
         Image(
             painter = painterResource(id = R.drawable.zone2),
             contentDescription = null,
