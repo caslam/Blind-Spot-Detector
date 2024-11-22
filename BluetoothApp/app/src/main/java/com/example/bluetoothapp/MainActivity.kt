@@ -51,6 +51,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.bluetoothapp.domain.BluetoothService
 import com.example.bluetoothapp.domain.MESSAGE_READ
+import com.example.bluetoothapp.domain.toBluetoothMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -78,6 +79,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private val gyroFrequency = 150L  // Transmission frequency of gyro data in ms
     private var gyroData: FloatArray = floatArrayOf(0f, 0f, 0f)
+    private var lidarData: IntArray = intArrayOf(0, 0, 0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +95,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     Row (horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.Top,
                         modifier = Modifier.fillMaxWidth()
-                                           .padding(vertical = 64.dp)) {
+                            .padding(vertical = 64.dp)) {
                         Button (onClick = {
                             println("Connect clicked")
                             setupBluetooth()
@@ -146,8 +148,10 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             when (msg.what) {
                 MESSAGE_READ -> {
                     val readBuffer = msg.obj as ByteArray
-                    val readMessage = String(readBuffer, 0, msg.arg1)
-                    Toast.makeText(this@MainActivity, "Received: $readMessage", Toast.LENGTH_SHORT).show()
+                    val readMessage = String(readBuffer, 0, msg.arg1).toBluetoothMessage()
+//                    Toast.makeText(this@MainActivity, "Received: $readMessage", Toast.LENGTH_SHORT).show()
+                    println("$readMessage")
+                    lidarData[readMessage.sensorId - 1] = readMessage.message
                 }
             }
         }
@@ -219,7 +223,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         val gyroSensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         if (gyroSensor != null) {
             gyroSensor.also { gyro ->
-                sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_NORMAL)
+                sensorManager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_UI)
             }
         } else {
             println("No gyroscope available")
@@ -333,7 +337,6 @@ fun Test1(txt: String,
                     contentDescription = null
                 )
             }
-
         }
     }
 }
