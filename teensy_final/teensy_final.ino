@@ -70,10 +70,8 @@ void setup() {
 void loop() {
 
   // Prints bluetooth data to the serial monitor
-  float buf[3];
-  Serial1.readBytes((char*) buf, 12);
-  Serial.printf("bluetooth: %f, %f, %f\n", buf[0], buf[1], buf[2]);
-
+  printBluetoothData();
+  
   // Prints gyro data to the serial monitor
   printGyroData();
 
@@ -110,6 +108,27 @@ void sortFIFO() {
     }
 }
 
+void printBluetoothData() {
+  char buf[sizeof(float) * 4 + 1];
+  float *f_buf = (float *)buf;
+  char c = '0';
+
+  while (c != '$') {
+    c = Serial1.read();
+  }
+  Serial1.readBytes(buf, 17);
+
+  float f1 = f_buf[0];
+  float f2 = f_buf[1];
+  float f3 = f_buf[2];
+  float f4 = f_buf[3];
+  if (f1 + f2 + f3 == f4) {
+    Serial.printf(" bluetooth: %f, %f, %f\n", f1, f2, f3);
+  } else {
+    Serial.print("checksum failed");
+  }
+  Serial.println();
+}
 
 void printGyroData() {
   // Update and retrieve gyro data from IMU 1
@@ -135,7 +154,7 @@ void printLidarData() {
   checkLidarData(Wire, previousDistance1,1);
   checkLidarData(Wire1, previousDistance2,2);
   checkLidarData(Wire2, previousDistance3,3);
-  Serial.print("\n");
+  // Serial.print("\n");
 }
 
 void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
@@ -150,9 +169,9 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
   //Serial.printf("%4dmm\t", distance);
 
   if (distance < DETECTION_RANGE) {
-    Serial1.printf("$1,%d\n", sensor); // Object detected
+    Serial1.printf("1,%d\n", sensor); // Object detected
   } else {
-    Serial1.printf("$0,%d\n", sensor); // No object detected
+    Serial1.printf("0,%d\n", sensor); // No object detected
   }
   // Check for high change from the previous distance
   if ((previousDistance - distance) >= threshold) {

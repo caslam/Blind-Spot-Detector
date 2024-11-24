@@ -148,10 +148,12 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             when (msg.what) {
                 MESSAGE_READ -> {
                     val readBuffer = msg.obj as ByteArray
-                    val readMessage = String(readBuffer, 0, msg.arg1).toBluetoothMessage()
+                    val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
 //                    Toast.makeText(this@MainActivity, "Received: $readMessage", Toast.LENGTH_SHORT).show()
-                    println("$readMessage")
-                    lidarData[readMessage.sensorId - 1] = readMessage.message
+                    if (readMessage.sensorId > 0) {
+//                        println("${(readMessage.sensorId)}, ${(readMessage.message)}")
+                        lidarData[readMessage.sensorId - 1] = readMessage.message
+                    }
                 }
             }
         }
@@ -186,12 +188,16 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     }
 
     private fun FloatArray.toByteArray(): ByteArray {
-        val buffer = ByteBuffer.allocate(this.size * 4) // 4 bytes per float
-        buffer.order(ByteOrder.nativeOrder()) // Use native byte order
-
+        val buffer = ByteBuffer.allocate((this.size + 1) * 4) // 4 bytes per float
+        var sum = 0f
+        buffer.order(ByteOrder.LITTLE_ENDIAN) // Use native byte order
         for (float in this) {
             buffer.putFloat(float)
         }
+        for (float in this) {
+            sum += float
+        }
+        buffer.putFloat(sum)
         return buffer.array()
     }
 
@@ -204,8 +210,10 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
     private fun sendGyroData() {
         val bytes = gyroData.toByteArray()
-        println("${gyroData[0]}, ${gyroData[1]}, ${gyroData[2]}")
+//        println("${gyroData[0]}, ${gyroData[1]}, ${gyroData[2]}")
+        bluetoothService.ConnectedThread(bluetoothSocket!!).write("$".toByteArray())
         bluetoothService.ConnectedThread(bluetoothSocket!!).write(bytes)
+        bluetoothService.ConnectedThread(bluetoothSocket!!).write("%".toByteArray())
     }
 
     override fun onSensorChanged(event: SensorEvent?) {

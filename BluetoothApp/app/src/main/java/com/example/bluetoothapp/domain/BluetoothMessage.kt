@@ -3,10 +3,15 @@ package com.example.bluetoothapp.domain
 fun String.toBluetoothMessage() : BluetoothMessage {
     var sensorId = 0
     var data = 0
-    val message = substringBefore("#")
-    data = (message.substringBefore(",")).toInt()
-    sensorId = (message.substringAfter(",")).toInt()
-
+    val regex = Regex("""[0-9],[0-9]""")
+    if (matches(regex)) {
+        try {
+            data = (substringBefore(",")).toInt()
+            sensorId = (substringAfter(",")).toInt()
+        } catch (e: NumberFormatException) {
+            return BluetoothMessage(sensorId = 0, message = 0)
+        }
+    }
     return BluetoothMessage(sensorId = sensorId, message = data)
 }
 
