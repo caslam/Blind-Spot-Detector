@@ -21,6 +21,7 @@ typedef struct BtData {
 MPU6050 IMU;
 calData calib = { 0 };
 GyroData gyroData;
+GyroData phoneGyroData;
 
 // Store offsets for calibration
 float offsetX1 = 0, offsetY1 = 0, offsetZ1 = 0;
@@ -28,6 +29,9 @@ float offsetX1 = 0, offsetY1 = 0, offsetZ1 = 0;
 // Sliding window of gyro inputs to feed into model
 // gyroInputs is a circular buffer, while gyroToModel is a time-sorted copy of gyroInputs
 int16_t gyroInputs[36], gyroToModel[36];
+float gyroData1[3];
+float gyroData2[3];
+
 // Index for circular buffer
 int i = 0;
 
@@ -78,20 +82,23 @@ void loop() {
 
   // Computes the difference in gyro values
   // Configure this one to accept bluetooth values. Do this after getting bluetooth to work.
-  // int16_t gyroInput_x = (int16_t) 1000 * ((gyroData2.gyroX - offsetX2)- (gyroData1.gyroX - offsetX1));
-  // gyroInputs[3*i] = gyroInput_x;
+  int16_t gyroInput_x = (int16_t) 10 * ((gyroData.gyroX - offsetX1)- (phoneGyroData.gyroX));
+  gyroInputs[3*i] = gyroInput_x;
 
-  // int16_t gyroInput_y = (int16_t) 1000 * ((gyroData2.gyroY - offsetY2) - (gyroData1.gyroY - offsetY1));
-  // gyroInputs[3*i+1] = gyroInput_y;
+  int16_t gyroInput_y = (int16_t) 10 * ((gyroData.gyroY - offsetY1) - (phoneGyroData.gyroY));
+  gyroInputs[3*i+1] = gyroInput_y;
 
-  // int16_t gyroInput_z = (int16_t) 1000 * ((gyroData2.gyroZ - offsetZ2) - (gyroData1.gyroZ - offsetZ1));
-  // gyroInputs[3*i+2] = gyroInput_z;
+  int16_t gyroInput_z = (int16_t) 10 * ((gyroData.gyroZ - offsetZ1) - (phoneGyroData.gyroZ));
+  gyroInputs[3*i+2] = gyroInput_z;
 
   // Copies the FIFO and sorts it from oldest to newest data
   sortFIFO();
   // Sends the copied and sorted FIFO into the model
   // Uncomment when the bluetooth is figured out. Also, we gotta figure out how to send this number to the phone.
-  // int32_t model_output = testModel_predict(gyroToModel, 3); // Do something with this output (0/1)!
+  int32_t model_output = testModel_predict(gyroToModel, 3); // Do something with this output (0/1)!
+  Serial.printf("%d, %d, %d, %d\n", gyroInput_x, gyroInput_y, gyroInput_z, model_output);
+  Serial1.printf("4,%d\n", model_output);
+  // Serial.println(model_output);
   i = (i + 1) % 12;
 
   // Prints LiDAR measurements
@@ -109,23 +116,24 @@ void sortFIFO() {
 }
 
 void printBluetoothData() {
-  char buf[sizeof(float) * 4 + 1];
+  char buf[sizeof(float) * 4];
   float *f_buf = (float *)buf;
-  char c = '0';
 
-  while (c != '$') {
-    c = Serial1.read();
-  }
-  Serial1.readBytes(buf, 17);
+  while (Serial1.read() != '$') { }
+  Serial1.readBytes(buf, sizeof(buf));
 
-  float f1 = f_buf[0];
-  float f2 = f_buf[1];
-  float f3 = f_buf[2];
-  float f4 = f_buf[3];
-  if (f1 + f2 + f3 == f4) {
-    Serial.printf(" bluetooth: %f, %f, %f\n", f1, f2, f3);
+  float gyro_x = f_buf[0];
+  float gyro_y = f_buf[1];
+  float gyro_z = f_buf[2];
+  float checksum = f_buf[3];
+
+  if (gyro_x + gyro_y + gyro_z == checksum) {
+    // Serial.printf(" bluetooth: %f, %f, %f\n", gyro_x, gyro_y, gyro_z);
+    phoneGyroData.gyroX = gyro_x;
+    phoneGyroData.gyroX = gyro_y;
+    phoneGyroData.gyroX = gyro_z;
   } else {
-    Serial.print("checksum failed");
+    // Serial.print("checksum failed");
   }
   Serial.println();
 }
@@ -135,13 +143,12 @@ void printGyroData() {
   IMU.update();
   IMU.getGyro(&gyroData);
 
-
   // Print gyro data from both IMUs in one line
   // Serial.printf("%f, %f, %f, %f, %f, %f\n", 
   //               gyroData1.gyroX - offsetX1, gyroData1.gyroY - offsetY1, gyroData1.gyroZ - offsetZ1,
   //               gyroData2.gyroX - offsetX2, gyroData2.gyroY - offsetY2, gyroData2.gyroZ - offsetZ2);
-  Serial.printf("%f, %f, %f", 
-                gyroData.gyroX - offsetX1, gyroData.gyroY - offsetY1, gyroData.gyroZ - offsetZ1);
+  // Serial.printf("%f, %f, %f", 
+  //               gyroData.gyroX - offsetX1, gyroData.gyroY - offsetY1, gyroData.gyroZ - offsetZ1);
 
   // Check if both IMUs are stationary
   // if (abs(gyroData1.gyroX - offsetX1) < 0.1 && abs(gyroData1.gyroY - offsetY1) < 0.1 && abs(gyroData1.gyroZ - offsetZ1) < 0.1 &&
