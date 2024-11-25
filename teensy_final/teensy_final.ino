@@ -4,18 +4,10 @@
 // model header
 #include "modelHeader_dtree_final.h"
 
-#define IMU_ADDRESS 0x69 // IMU (AD0 to VCC)
+#define IMU_ADDRESS 0x68 // IMU (AD0 to GND)
 #define LIDAR_ADDRESS 0x74
 
 enum msg_id {GYRO_MSG, LIDAR_MSG};
-
-// Is this used at all?
-typedef struct BtData {
-  enum msg_id msg_id;
-  int data1;
-  int data2;
-  bool data3;
-} BtData;
 
 // Instantiate the IMU
 MPU6050 IMU;
@@ -29,8 +21,6 @@ float offsetX1 = 0, offsetY1 = 0, offsetZ1 = 0;
 // Sliding window of gyro inputs to feed into model
 // gyroInputs is a circular buffer, while gyroToModel is a time-sorted copy of gyroInputs
 int16_t gyroInputs[36], gyroToModel[36];
-float gyroData1[3];
-float gyroData2[3];
 
 // Index for circular buffer
 int i = 0;
@@ -39,7 +29,7 @@ int previousDistance1 = 0; // Previous distance for Wire (LIDAR 1)
 int previousDistance2 = 0; // Previous distance for Wire1 (LIDAR 2)
 int previousDistance3 = 0; // Previous distance for Wire2 (LIDAR 3)
 const int threshold = 300; // Change threshold in mm
-const int buzzerPin = 6;   // Pin for the buzzer
+const int buzzerPin = 20;   // Pin for the buzzer
 const int DETECTION_RANGE = 2000;
 
 
@@ -78,7 +68,6 @@ void loop() {
   
   // Prints gyro data to the serial monitor
   printGyroData();
-
 
   // Computes the difference in gyro values
   // Configure this one to accept bluetooth values. Do this after getting bluetooth to work.
@@ -173,7 +162,7 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
   delay(50);
   readReg(0x02, buf, 2, Wire);
   distance = buf[0] * 0x100 + buf[1] + 10;
-  //Serial.printf("%4dmm\t", distance);
+  // Serial.printf("%4dmm\t", distance);
 
   if (distance < DETECTION_RANGE) {
     Serial1.printf("1,%d\n", sensor); // Object detected
