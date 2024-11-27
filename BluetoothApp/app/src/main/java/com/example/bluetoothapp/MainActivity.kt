@@ -60,6 +60,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
+import com.google.android.material.snackbar.Snackbar
 
 private val requiredPermissions = arrayOf(
     android.Manifest.permission.BLUETOOTH,
@@ -148,13 +149,18 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             when (msg.what) {
                 MESSAGE_READ -> {
                     val readBuffer = msg.obj as ByteArray
+                    println(String(readBuffer, 0, msg.arg1))
                     val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
 
                     if (readMessage.sensorId > 0) {
                         if ((readMessage.sensorId == 4) && (readMessage.message == 1)) {
-                            Toast.makeText(this@MainActivity, "Pay attention to the road >:(", Toast.LENGTH_SHORT).show()
+//                            println("${(readMessage.sensorId)}, ${(readMessage.message)}")
+//                            Toast.makeText(this@MainActivity, "Received: $readMessage", Toast.LENGTH_SHORT).show()
+//                            Toast.makeText(this@MainActivity, ">:(", Toast.LENGTH_LONG).show()
+                            val rootView = findViewById<android.view.View>(android.R.id.content)
+                            Snackbar.make(rootView, "Pay attention to the road! >:(", Snackbar.LENGTH_SHORT).show()
                         } else if (readMessage.sensorId < 4) {
-                            // println("${(readMessage.sensorId)}, ${(readMessage.message)}")
+//                             println("${(readMessage.sensorId)}, ${(readMessage.message)}")
                             lidarData[readMessage.sensorId - 1] = readMessage.message
                         }
                     }

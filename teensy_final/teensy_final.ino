@@ -28,7 +28,7 @@ int i = 0;
 int previousDistance1 = 0; // Previous distance for Wire (LIDAR 1)
 int previousDistance2 = 0; // Previous distance for Wire1 (LIDAR 2)
 int previousDistance3 = 0; // Previous distance for Wire2 (LIDAR 3)
-const int threshold = 300; // Change threshold in mm
+const int threshold = 1000; // Change threshold in mm
 const int buzzerPin = 20;   // Pin for the buzzer
 const int DETECTION_RANGE = 2000;
 
@@ -86,7 +86,10 @@ void loop() {
   // Uncomment when the bluetooth is figured out. Also, we gotta figure out how to send this number to the phone.
   int32_t model_output = testModel_predict(gyroToModel, 3); // Do something with this output (0/1)!
   Serial.printf("%d, %d, %d, %d\n", gyroInput_x, gyroInput_y, gyroInput_z, model_output);
-  Serial1.printf("4,%d\n", model_output);
+  if (model_output) {
+  Serial1.printf("$4,1\n", model_output);
+
+  }
   // Serial.println(model_output);
   i = (i + 1) % 12;
 
@@ -165,20 +168,31 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
   // Serial.printf("%4dmm\t", distance);
 
   if (distance < DETECTION_RANGE) {
-    Serial1.printf("1,%d\n", sensor); // Object detected
+    Serial1.printf("$1,%d\n", sensor); // Object detected
   } else {
-    Serial1.printf("0,%d\n", sensor); // No object detected
+    Serial1.printf("$0,%d\n", sensor); // No object detected
   }
+
+  
+
+  // Serial.printf("sensor: %d, %d, %d\n", sensor, previousDistance, distance);
   // Check for high change from the previous distance
-  if ((previousDistance - distance) >= threshold) {
+  if ((previousDistance - distance) >= threshold && distance != 10) {
+    Serial.printf("sensor: %d, %d, %d\n", sensor, previousDistance, distance); // No object detected
     tone(buzzerPin, 1000); // Buzz with 1000 Hz frequency
     delay(100); // Buzz duration
     noTone(buzzerPin);
-    // Serial1.write("1 + sensor %d", sensor);
+    // Serial.printf("sensor %d", sensor);
   }
 
-  // Update previous distance
   previousDistance = distance;
+  // Update previous distance
+  if (distance == 10) {
+    // Serial.printf("distance from %d is 10\n", sensor);
+    distance = 5000;
+  }
+
+  
 }
 
 
