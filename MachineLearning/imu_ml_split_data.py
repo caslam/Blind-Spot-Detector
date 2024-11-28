@@ -47,4 +47,4 @@ def splitFile(fileName, dir):
 
 
 # select the folder in the directory of this file that contains the data
-splitTextFiles('txt_files')
+# splitTextFiles('txt_files')
