@@ -14,9 +14,10 @@ import matplotlib.pyplot as plt
 import joblib
 
 # REMEMBER TO CHANGE WHENEVER CREATING A NEW MODEL
-dataset_csv_file = 'combined_data_final.csv' 
-model_name = 'model_dtree_final.pkl'
-header_name = 'modelHeader_dtree_final.h'
+dataset_csv_file = 'combined_data_final2.csv' 
+model_name = 'model_dtree_final2.pkl'
+header_name = 'modelHeader_dtree_final2.h'
+data_folder = 'txt_files_dtree2'
 
 dataset_arrays = [] # an array of data arrays
 database = [] # stores the names of the files corresponding to each array, only used to plot
@@ -26,12 +27,12 @@ max_length = 0
 # takes the difference between two readings
 def computeDiff(arr):
     if (len(arr) != 6):
-        print("Invalid length\n")
+        print("Invalid length")
         return arr
 
     new_arr = []
     for i in range(3):
-        new_arr.append(arr[i + 3] - arr[i])
+        new_arr.append(arr[i+3] - arr[i])
     return new_arr
 
 
@@ -93,7 +94,7 @@ def fileWrite(itemList, fileName):
 
 # reads all the data files and compiles them into the global arrays
 def accessDataFolder():
-    folder_path = os.path.join(os.path.dirname("imu_ml_dtree.py"), 'txt_files_dtree') # finds the file path to this code
+    folder_path = os.path.join(os.path.dirname("imu_ml_dtree.py"), data_folder) # finds the file path to this code
     txt_files = glob.glob(os.path.join(folder_path, '*.txt')) # gathers all the file paths for the datasets
     label_array = [] # stores the labels for each array
 
@@ -104,9 +105,9 @@ def accessDataFolder():
         # Reads the file and records the data into an array
         data_array = fileRead([], file_path)
 
-        # Determines the label
-        # first method of labels: '1' if big turn, '0' if small turn
-        if "Left 10-25" in file_name or "Left 25-45" in file_name or "Right 10-15" in file_name or "Right 20-30" in file_name or "Right 30-45" in file_name:
+        # Determines the label. Replace the file names with those found in the folder you're looking at. 
+        # '0' if small turn, '1' if big turn
+        if "left_small" in file_name or "right_small" in file_name:
             label_array.append(0)
         else:
             label_array.append(1)
@@ -243,13 +244,14 @@ def convertToC(pkl_name, c_name):
 
 
 print("\n")
-print("Current file name specifications:")
+print("Current specifications:")
 print("CSV FILE: %s" % dataset_csv_file)
 print("RAW MODEL: %s" % model_name)
 print("HEADER FILE: %s" % header_name)
+print("PULLING DATA FROM : %s" % data_folder)
 
 while True:
-    answer = input("Confirm file names? (Y/N) ").strip().upper()
+    answer = input("Confirm? (Y/N) ").strip().upper()
     if (answer == 'Y'):
         print("\nCreating model...")
         # warning: it WILL overwrite existing files if you are not careful
