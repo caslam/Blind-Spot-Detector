@@ -108,8 +108,16 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                     } else if (readMessage.sensorId < 4) {
                                         println("${(readMessage.sensorId)}, ${(readMessage.message)}")
                                         Log.d("app_log","lidardata updated")
-                                        lidarData.value[readMessage.sensorId - 1] = readMessage.message
-                                        count.value += 1
+//                                        lidarData.value[readMessage.sensorId - 1] = readMessage.message
+//                                        count.value += 1
+                                        if (readMessage.sensorId - 1 == 0) {
+                                            lidarData.value = intArrayOf(readMessage.message, lidarData.value[1], lidarData.value[2])
+                                        } else if (readMessage.sensorId - 1 == 1) {
+                                            lidarData.value = intArrayOf(lidarData.value[0], readMessage.message, lidarData.value[2])
+                                        } else {
+                                            lidarData.value = intArrayOf(lidarData.value[0], lidarData.value[1], readMessage.message)
+                                        }
+
                                     }
                                 }
                             }
@@ -488,9 +496,9 @@ fun RageCounter2(modifier: Modifier = Modifier, array: MutableState<IntArray>, c
         }
 
         Button(onClick = {
-            count.value += 1
+//            count.value += 1
             Log.d("app_log","rage: ${array.value[1]}")
-            array.value[1] += 1
+            array.value = intArrayOf(array.value[0] + 1, array.value[1] + 1, array.value[2])
         }, Modifier.padding(top = 8.dp)) {
             Text("RAGE")
         }
