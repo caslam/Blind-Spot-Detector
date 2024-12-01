@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -43,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -91,21 +93,23 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         enableEdgeToEdge()
         setContent {
             BluetoothAppTheme {
+                var count : MutableState<Int> = rememberSaveable { mutableIntStateOf(0) }
                 var lidarData : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
-                var testArray by rememberSaveable { mutableStateOf(lidarData) }
+                var testArray : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
                 val handler = object : Handler(Looper.getMainLooper()) {
                     override fun handleMessage(msg: Message) {
                         when (msg.what) {
                             MESSAGE_READ -> {
                                 val readBuffer = msg.obj as ByteArray
                                 val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
-
                                 if (readMessage.sensorId > 0) {
                                     if ((readMessage.sensorId == 4) && (readMessage.message == 1)) {
                                         Toast.makeText(this@MainActivity, "Pay attention to the road >:(", Toast.LENGTH_SHORT).show()
                                     } else if (readMessage.sensorId < 4) {
                                         println("${(readMessage.sensorId)}, ${(readMessage.message)}")
+                                        Log.d("app_log","lidardata updated")
                                         lidarData.value[readMessage.sensorId - 1] = readMessage.message
+                                        count.value += 1
                                     }
                                 }
                             }
@@ -169,12 +173,14 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     color = MaterialTheme.colorScheme.background
 //                    color = Color.LightGray
                 ) {
+
                     Row (horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.Top,
                         modifier = Modifier.fillMaxWidth()
                             .padding(vertical = 64.dp)) {
                         Button (onClick = {
                             println("Connect clicked")
+                            Log.d("app_log","connect clicked")
                             setupBluetooth()
                         },
                             modifier = Modifier.padding(16.dp, 16.dp)
@@ -183,6 +189,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         }
                         Button (onClick =  {
                             println("Disconnect clicked")
+                            Log.d("app_log","disconnect clicked")
                             handler.removeCallbacks(sendDataRunnable)
                             bluetoothSocket?.close()
                         },
@@ -191,10 +198,9 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                             Text("Disconnect")
                         }
                     }
-                    LRZones(l_state = lidarData.value[0], r_state = lidarData.value[2])
-                    Person("User")
-                    CZone(c_state = lidarData.value[1])
-                    AngerManagementScreen2(array = lidarData)
+
+                    LayoutScreen(lidarData, count)
+                    AngerManagementScreen2(array = testArray, count = count)
                 }
             }
         }
@@ -387,12 +393,14 @@ fun LRZones(l_state : Int, r_state: Int,
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone3 drawn")
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.zone6),
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone6 drawn")
             }
         }
         Box() {
@@ -407,12 +415,14 @@ fun LRZones(l_state : Int, r_state: Int,
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone1 drawn")
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.zone4),
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone4 drawn")
             }
         }
     }
@@ -424,53 +434,63 @@ fun CZone(modifier: Modifier = Modifier, c_state : Int) {
         var count by remember { mutableStateOf(0) }
         val imageModifier = Modifier
             .size(340.dp)
-//            .border(BorderStroke(1.dp, Color.Black))
-        Button(onClick = {
-            count = (count + 1) % 2
-        }, Modifier.padding(top = 8.dp)) {
-            Text("hlep")
-        }
-        if (count == 0) {
+            .border(BorderStroke(1.dp, Color.Black))
+//        Button(onClick = {
+//            count = (count + 1) % 2
+//        }, Modifier.padding(top = 8.dp)) {
+//            Text("hlep")
+//        }
+        if (c_state == 0) {
             Image(
                 painter = painterResource(id = R.drawable.zone2),
                 contentDescription = null,
                 modifier = imageModifier
             )
+            Log.d("app_log","zone2 drawn")
         } else {
             Image(
                 painter = painterResource(id = R.drawable.zone5),
                 contentDescription = null,
                 modifier = imageModifier
             )
+            Log.d("app_log","zone5 drawn")
         }
 
     }
 }
 
 @Composable
-fun AngerManagementScreen2(modifier: Modifier = Modifier, array: MutableState<IntArray>) {
-    RageCounter2(modifier, array)
+fun LayoutScreen(array: MutableState<IntArray>, count : MutableState<Int>, modifier: Modifier = Modifier) {
+    if (count.value != -1) {
+        LRZones(l_state = array.value[0], r_state = array.value[2])
+        Person("User")
+        CZone(c_state = array.value[1])
+    }
 }
 
 @Composable
-fun RageCounter2(modifier: Modifier = Modifier, array: MutableState<IntArray>) {
+fun AngerManagementScreen2(modifier: Modifier = Modifier, array: MutableState<IntArray>, count : MutableState<Int>) {
+    RageCounter2(modifier, array, count)
+    Log.d("app_log","anger screen drawn")
+    Log.d("app_log","anger: ${array.value[1]}")
+}
+
+@Composable
+fun RageCounter2(modifier: Modifier = Modifier, array: MutableState<IntArray>, count : MutableState<Int>) {
     Column(modifier = modifier.padding(16.dp), verticalArrangement = Arrangement.Bottom) {
-        var count by rememberSaveable { mutableStateOf(0) }
-        if (count > 0 && count < 10){
+        Log.d("app_log","rage counter drawn")
+        if (count.value != -1) {
             Text(
-                text = "You've raged $count times.",
+//                text = "count: ${count.value} and array: ${array.value[1]}",
+                text = "array: ${array.value[1]}",
                 modifier = modifier.padding(16.dp)
             )
-        } else if (count >= 10) {
-
         }
-        Text(
-            text = "second value: ${array.value.get(1)}",
-            modifier = modifier.padding(16.dp)
-        )
+
         Button(onClick = {
-            count++;
-            array.value[1] = (array.value[1] + 1) % 2
+            count.value += 1
+            Log.d("app_log","rage: ${array.value[1]}")
+            array.value[1] += 1
         }, Modifier.padding(top = 8.dp)) {
             Text("RAGE")
         }
