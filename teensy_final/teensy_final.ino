@@ -121,8 +121,8 @@ void printBluetoothData() {
   if (gyro_x + gyro_y + gyro_z == checksum) {
     // Serial.printf(" bluetooth: %f, %f, %f\n", gyro_x, gyro_y, gyro_z);
     phoneGyroData.gyroX = gyro_x;
-    phoneGyroData.gyroX = gyro_y;
-    phoneGyroData.gyroX = gyro_z;
+    phoneGyroData.gyroY = gyro_y;
+    phoneGyroData.gyroZ = gyro_z;
   } else {
     // Serial.print("checksum failed");
   }
