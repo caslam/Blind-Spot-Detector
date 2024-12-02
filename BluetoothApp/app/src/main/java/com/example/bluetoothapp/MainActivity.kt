@@ -350,7 +350,7 @@ fun LRZones(l_state : Int, r_state: Int,
                 .width(width.dp)
                 .height(height.dp)
 //                .border(BorderStroke(1.dp, Color.Black))
-            if (l_state == 0) {
+            if (l_state == 1) {
                 Image(
                     painter = painterResource(id = R.drawable.zone3),
                     modifier = imageModifier,
@@ -372,7 +372,7 @@ fun LRZones(l_state : Int, r_state: Int,
                 .height(height.dp)
 //                .border(BorderStroke(1.dp, Color.Black))
 //                .background(Color.Yellow)
-            if (r_state == 0) {
+            if (r_state == 1) {
                 Image(
                     painter = painterResource(id = R.drawable.zone1),
                     modifier = imageModifier,
@@ -398,7 +398,7 @@ fun CZone(modifier: Modifier = Modifier, c_state : Int) {
         val imageModifier = Modifier
             .size(340.dp)
 //            .border(BorderStroke(1.dp, Color.Black))
-        if (c_state == 0) {
+        if (c_state == 1) {
             Image(
                 painter = painterResource(id = R.drawable.zone2),
                 contentDescription = null,
