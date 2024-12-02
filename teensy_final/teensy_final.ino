@@ -87,8 +87,7 @@ void loop() {
   int32_t model_output = testModel_predict(gyroToModel, 3); // Do something with this output (0/1)!
   Serial.printf("%d, %d, %d, %d\n", gyroInput_x, gyroInput_y, gyroInput_z, model_output);
   if (model_output) {
-  Serial1.printf("$4,1\n", model_output);
-
+    Serial1.printf("$1,4\n");
   }
   // Serial.println(model_output);
   i = (i + 1) % 12;

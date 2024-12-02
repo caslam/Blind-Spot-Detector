@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -41,6 +42,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,7 +68,6 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
-import com.google.android.material.snackbar.Snackbar
 
 private val requiredPermissions = arrayOf(
     android.Manifest.permission.BLUETOOTH,
@@ -80,25 +87,108 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private val gyroFrequency = 150L  // Transmission frequency of gyro data in ms
     private var gyroData: FloatArray = floatArrayOf(0f, 0f, 0f)
-    private var lidarData: IntArray = intArrayOf(0, 0, 0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             BluetoothAppTheme {
+                var count : MutableState<Int> = rememberSaveable { mutableIntStateOf(0) }
+                var lidarData : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
+                var testArray : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
+                val handler = object : Handler(Looper.getMainLooper()) {
+                    override fun handleMessage(msg: Message) {
+                        when (msg.what) {
+                            MESSAGE_READ -> {
+                                val readBuffer = msg.obj as ByteArray
+                                val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
+                                if (readMessage.sensorId > 0) {
+                                    if ((readMessage.sensorId == 4) && (readMessage.message == 1)) {
+                                        Toast.makeText(this@MainActivity, "Pay attention to the road!", Toast.LENGTH_SHORT).show()
+                                    } else if (readMessage.sensorId < 4) {
+                                        println("${(readMessage.sensorId)}, ${(readMessage.message)}")
+                                        Log.d("app_log","lidardata updated")
+//                                        lidarData.value[readMessage.sensorId - 1] = readMessage.message
+//                                        count.value += 1
+                                        if (readMessage.sensorId - 1 == 0) {
+                                            lidarData.value = intArrayOf(readMessage.message, lidarData.value[1], lidarData.value[2])
+                                        } else if (readMessage.sensorId - 1 == 1) {
+                                            lidarData.value = intArrayOf(lidarData.value[0], readMessage.message, lidarData.value[2])
+                                        } else {
+                                            lidarData.value = intArrayOf(lidarData.value[0], lidarData.value[1], readMessage.message)
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                val sendDataRunnable = object : Runnable {
+                    override fun run() {
+                        sendGyroData()
+                        handler.postDelayed(this, gyroFrequency)
+                    }
+                }
+                fun connectToDevice(device: BluetoothDevice) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            bluetoothSocket = device.createRfcommSocketToServiceRecord(deviceUUID)
+                            bluetoothSocket?.connect()
+                            bluetoothService = BluetoothService(handler)
+                            if (bluetoothSocket == null) {
+                                println("BT socket was null")
+                            } else {
+                                bluetoothService.ConnectedThread(bluetoothSocket!!).start()
+                                handler.post(sendDataRunnable)
+                            }
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, "Connected to HC-06", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, "Connection failed", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: SecurityException) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+                fun setupBluetooth() {
+                    val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+                    val bluetoothAdapter: BluetoothAdapter = bluetoothManager.adapter?: return
+
+                    if (!bluetoothAdapter.isEnabled) {
+                        return
+                    }
+
+                    try {
+                        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter.bondedDevices
+                        pairedDevices?.forEach { device ->
+                            // Attempt to connect to the HC-06
+                            if (device.name == "HC-06") {
+                                connectToDevice(device)
+                                return@forEach
+                            }
+                        }
+                    } catch (e: SecurityException) {
+                        e.printStackTrace()
+                    }
+                }
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
 //                    color = Color.LightGray
                 ) {
-                    var test : Int = 0
+
                     Row (horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.Top,
                         modifier = Modifier.fillMaxWidth()
                             .padding(vertical = 64.dp)) {
                         Button (onClick = {
                             println("Connect clicked")
+                            Log.d("app_log","connect clicked")
                             setupBluetooth()
                         },
                             modifier = Modifier.padding(16.dp, 16.dp)
@@ -107,6 +197,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         }
                         Button (onClick =  {
                             println("Disconnect clicked")
+                            Log.d("app_log","disconnect clicked")
                             handler.removeCallbacks(sendDataRunnable)
                             bluetoothSocket?.close()
                         },
@@ -114,23 +205,9 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         ) {
                             Text("Disconnect")
                         }
-                        Button (onClick = {
-                            test += 1;
-                        },
-                            modifier = Modifier.padding(16.dp, 16.dp)
-                        ) {
-                            Text("uh")
-                        }
                     }
-//                    Greeting("up")
-                    Test1("down",1, 1)
-//                    TitleCardColumn()
-                    Person("david")
-//                    Person("dat")
-//                    Person("cassandra")
-//                    SimpleFilledTextFieldSample()
-//                    Person("tyler")
-                    Zones()
+
+                    LayoutScreen(lidarData, count)
                 }
             }
         }
@@ -144,56 +221,9 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         setupGyro()
     }
 
-    private val handler = object : Handler(Looper.getMainLooper()) {
-        override fun handleMessage(msg: Message) {
-            when (msg.what) {
-                MESSAGE_READ -> {
-                    val readBuffer = msg.obj as ByteArray
-                    println(String(readBuffer, 0, msg.arg1))
-                    val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
-
-                    if (readMessage.sensorId > 0) {
-                        if ((readMessage.sensorId == 4) && (readMessage.message == 1)) {
-//                            println("${(readMessage.sensorId)}, ${(readMessage.message)}")
-//                            Toast.makeText(this@MainActivity, "Received: $readMessage", Toast.LENGTH_SHORT).show()
-//                            Toast.makeText(this@MainActivity, ">:(", Toast.LENGTH_LONG).show()
-                            val rootView = findViewById<android.view.View>(android.R.id.content)
-                            Snackbar.make(rootView, "Pay attention to the road! >:(", Snackbar.LENGTH_SHORT).show()
-                        } else if (readMessage.sensorId < 4) {
-//                             println("${(readMessage.sensorId)}, ${(readMessage.message)}")
-                            lidarData[readMessage.sensorId - 1] = readMessage.message
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private fun allPermissionsGranted(): Boolean {
         return requiredPermissions.all { permission ->
             ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
-        }
-    }
-
-    private fun setupBluetooth() {
-        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        val bluetoothAdapter: BluetoothAdapter = bluetoothManager.adapter?: return
-
-        if (!bluetoothAdapter.isEnabled) {
-            return
-        }
-
-        try {
-            val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter.bondedDevices
-            pairedDevices?.forEach { device ->
-                // Attempt to connect to the HC-06
-                if (device.name == "HC-06") {
-                    connectToDevice(device)
-                    return@forEach
-                }
-            }
-        } catch (e: SecurityException) {
-            e.printStackTrace()
         }
     }
 
@@ -209,13 +239,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         }
         buffer.putFloat(sum)
         return buffer.array()
-    }
-
-    private val sendDataRunnable = object : Runnable {
-        override fun run() {
-            sendGyroData()
-            handler.postDelayed(this, gyroFrequency)
-        }
     }
 
     private fun sendGyroData() {
@@ -247,32 +270,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-    private fun connectToDevice(device: BluetoothDevice) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                bluetoothSocket = device.createRfcommSocketToServiceRecord(deviceUUID)
-                bluetoothSocket?.connect()
-                bluetoothService = BluetoothService(handler)
-                if (bluetoothSocket == null) {
-                    println("BT socket was null")
-                } else {
-                    bluetoothService.ConnectedThread(bluetoothSocket!!).start()
-                    handler.post(sendDataRunnable)
-                }
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Connected to HC-06", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Connection failed", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: SecurityException) {
-                e.printStackTrace()
-            }
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         sensorManager.unregisterListener(this)
@@ -284,7 +281,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 fun Person(username: String, modifier: Modifier = Modifier) {
     val imageModifier = Modifier
         .size(200.dp)
-        .border(BorderStroke(1.dp, Color.Black))
+        .padding(20.dp)
+//        .border(BorderStroke(1.dp, Color.Black))
     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Column(
             modifier = imageModifier,
@@ -310,8 +308,7 @@ fun Person(username: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun Test1(txt: String,
-          l_state : Int, r_state: Int,
+fun LRZones(l_state : Int, r_state: Int,
           modifier: Modifier = Modifier) {
     Row (verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Center) {
         val width = 200
@@ -320,26 +317,28 @@ fun Test1(txt: String,
             val imageModifier = Modifier
                 .width(width.dp)
                 .height(height.dp)
-                .border(BorderStroke(1.dp, Color.Black))
+//                .border(BorderStroke(1.dp, Color.Black))
             if (l_state == 0) {
                 Image(
                     painter = painterResource(id = R.drawable.zone3),
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone3 drawn")
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.zone6),
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone6 drawn")
             }
         }
         Box() {
             val imageModifier = Modifier
                 .width(width.dp)
                 .height(height.dp)
-                .border(BorderStroke(1.dp, Color.Black))
+//                .border(BorderStroke(1.dp, Color.Black))
 //                .background(Color.Yellow)
             if (r_state == 0) {
                 Image(
@@ -347,27 +346,50 @@ fun Test1(txt: String,
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone1 drawn")
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.zone4),
                     modifier = imageModifier,
                     contentDescription = null
                 )
+                Log.d("app_log","zone4 drawn")
             }
         }
     }
 }
 
 @Composable
-fun Zones(modifier: Modifier = Modifier) {
+fun CZone(modifier: Modifier = Modifier, c_state : Int) {
     Column(verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
+        var count by remember { mutableStateOf(0) }
         val imageModifier = Modifier
             .size(340.dp)
             .border(BorderStroke(1.dp, Color.Black))
-        Image(
-            painter = painterResource(id = R.drawable.zone2),
-            contentDescription = null,
-            modifier = imageModifier
-        )
+        if (c_state == 0) {
+            Image(
+                painter = painterResource(id = R.drawable.zone2),
+                contentDescription = null,
+                modifier = imageModifier
+            )
+            Log.d("app_log","zone2 drawn")
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.zone5),
+                contentDescription = null,
+                modifier = imageModifier
+            )
+            Log.d("app_log","zone5 drawn")
+        }
+
+    }
+}
+
+@Composable
+fun LayoutScreen(array: MutableState<IntArray>, count : MutableState<Int>, modifier: Modifier = Modifier) {
+    if (count.value != -1) {
+        LRZones(l_state = array.value[0], r_state = array.value[2])
+        Person("User")
+        CZone(c_state = array.value[1])
     }
 }
