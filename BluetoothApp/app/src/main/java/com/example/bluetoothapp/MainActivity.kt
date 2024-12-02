@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -208,7 +209,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     }
 
                     LayoutScreen(lidarData, count)
-                    AngerManagementScreen2(array = testArray, count = count)
+//                    AngerManagementScreen2(array = testArray, count = count)
                 }
             }
         }
@@ -385,6 +386,37 @@ fun Person(username: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun UserName(modifier: Modifier = Modifier) {
+    val imageModifier = Modifier
+        .size(200.dp)
+        .padding(20.dp)
+//        .border(BorderStroke(1.dp, Color.Black))
+    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            modifier = imageModifier,
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            var username by remember { mutableStateOf("") }
+            if (username != "david") {
+                Icon(Icons.Filled.AccountCircle, contentDescription = null)
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.squirrelicon2),
+                    contentDescription = null,
+//                    modifier = Modifier.background(Color.Black)
+                )
+            }
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Enter name") }
+            )
+        }
+    }
+}
+
+@Composable
 fun LRZones(l_state : Int, r_state: Int,
           modifier: Modifier = Modifier) {
     Row (verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Center) {
@@ -442,7 +474,7 @@ fun CZone(modifier: Modifier = Modifier, c_state : Int) {
         var count by remember { mutableStateOf(0) }
         val imageModifier = Modifier
             .size(340.dp)
-            .border(BorderStroke(1.dp, Color.Black))
+//            .border(BorderStroke(1.dp, Color.Black))
 //        Button(onClick = {
 //            count = (count + 1) % 2
 //        }, Modifier.padding(top = 8.dp)) {
@@ -470,8 +502,9 @@ fun CZone(modifier: Modifier = Modifier, c_state : Int) {
 @Composable
 fun LayoutScreen(array: MutableState<IntArray>, count : MutableState<Int>, modifier: Modifier = Modifier) {
     if (count.value != -1) {
-        LRZones(l_state = array.value[0], r_state = array.value[2])
-        Person("User")
+        LRZones(l_state = array.value[2], r_state = array.value[0])
+//        Person("User")
+        UserName()
         CZone(c_state = array.value[1])
     }
 }
