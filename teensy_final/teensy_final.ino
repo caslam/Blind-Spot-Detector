@@ -71,13 +71,13 @@ void loop() {
 
   // Computes the difference in gyro values
   // Configure this one to accept bluetooth values. Do this after getting bluetooth to work.
-  int16_t gyroInput_x = (int16_t) 10 * ((gyroData.gyroX - offsetX1)- (phoneGyroData.gyroX));
+  int16_t gyroInput_x = (int16_t) ((gyroData.gyroX - offsetX1)- (phoneGyroData.gyroX))/2.0;
   gyroInputs[3*i] = gyroInput_x;
 
-  int16_t gyroInput_y = (int16_t) 10 * ((gyroData.gyroY - offsetY1) - (phoneGyroData.gyroY));
+  int16_t gyroInput_y = (int16_t) ((gyroData.gyroY - offsetY1) - (phoneGyroData.gyroY))/2.0;
   gyroInputs[3*i+1] = gyroInput_y;
 
-  int16_t gyroInput_z = (int16_t) 10 * ((gyroData.gyroZ - offsetZ1) - (phoneGyroData.gyroZ));
+  int16_t gyroInput_z = (int16_t) ((gyroData.gyroZ - offsetZ1) - (phoneGyroData.gyroZ))/2.0;
   gyroInputs[3*i+2] = gyroInput_z;
 
   // Copies the FIFO and sorts it from oldest to newest data
@@ -85,11 +85,12 @@ void loop() {
   // Sends the copied and sorted FIFO into the model
   // Uncomment when the bluetooth is figured out. Also, we gotta figure out how to send this number to the phone.
   int32_t model_output = testModel_predict(gyroToModel, 3); // Do something with this output (0/1)!
-  Serial.printf("%d, %d, %d, %d\n", gyroInput_x, gyroInput_y, gyroInput_z, model_output);
+  // Serial.printf("%f, %f, %f", ((gyroData.gyroX - offsetX1)- (phoneGyroData.gyroX)), ((gyroData.gyroY - offsetY1)- (phoneGyroData.gyroY)), ((gyroData.gyroZ - offsetZ1)- (phoneGyroData.gyroZ)));
+  Serial.printf("%d, %d, %d, %d", gyroInput_x, gyroInput_y, gyroInput_z, model_output);
   if (model_output) {
     Serial1.printf("$1,4\n");
   }
-  // Serial.println(model_output);
+
   i = (i + 1) % 12;
 
   // Prints LiDAR measurements
@@ -166,6 +167,10 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
   distance = buf[0] * 0x100 + buf[1] + 10;
   // Serial.printf("%4dmm\t", distance);
 
+  if (distance == 10) {
+    distance = 5000;
+  }
+
   if (distance < DETECTION_RANGE) {
     Serial1.printf("$1,%d\n", sensor); // Object detected
   } else {
@@ -176,8 +181,8 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
 
   // Serial.printf("sensor: %d, %d, %d\n", sensor, previousDistance, distance);
   // Check for high change from the previous distance
-  if ((previousDistance - distance) >= threshold && distance != 10) {
-    Serial.printf("sensor: %d, %d, %d\n", sensor, previousDistance, distance); // No object detected
+  if ((previousDistance - distance) >= threshold) {
+    Serial.printf("sensor: %d, %d -> %d\n", sensor, previousDistance, distance); // No object detected
     tone(buzzerPin, 1000); // Buzz with 1000 Hz frequency
     delay(100); // Buzz duration
     noTone(buzzerPin);
@@ -186,11 +191,6 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
 
   previousDistance = distance;
   // Update previous distance
-  if (distance == 10) {
-    // Serial.printf("distance from %d is 10\n", sensor);
-    distance = 5000;
-  }
-
   
 }
 
