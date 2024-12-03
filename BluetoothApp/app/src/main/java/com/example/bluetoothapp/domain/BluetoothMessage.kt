@@ -3,7 +3,7 @@ package com.example.bluetoothapp.domain
 fun String.toBluetoothMessage() : BluetoothMessage {
     var sensorId = 0
     var data = 0
-    val regex = Regex("""\$[0-9],[0-9]""")
+    val regex = Regex("""\$[0-1],[1-4]""")
     if (matches(regex)) {
         try {
             val message = substringAfter("$")

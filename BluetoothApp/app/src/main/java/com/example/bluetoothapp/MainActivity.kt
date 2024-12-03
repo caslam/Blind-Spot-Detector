@@ -1,6 +1,5 @@
 package com.example.bluetoothapp
 
-import android.app.Activity
 import com.example.bluetoothapp.ui.theme.BluetoothAppTheme
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -21,9 +20,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,10 +49,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.bluetoothapp.domain.BluetoothService
@@ -98,33 +93,30 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             BluetoothAppTheme {
                 var count : MutableState<Int> = rememberSaveable { mutableIntStateOf(0) }
                 var lidarData : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
-                var testArray : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
                 val handler = object : Handler(Looper.getMainLooper()) {
                     override fun handleMessage(msg: Message) {
                         when (msg.what) {
                             MESSAGE_READ -> {
                                 val readBuffer = msg.obj as ByteArray
-                                val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
-                                if (readMessage.sensorId > 0) {
-                                    if ((readMessage.sensorId == 4) && (readMessage.message == 1)) {
-//                                        println("ml output 1")
-                                        showMlOutputToast()
-                                    } else if (readMessage.sensorId < 4) {
-//                                        println("${(readMessage.sensorId)}, ${(readMessage.message)}")
-//                                        Log.d("app_log","lidardata updated")
-//                                        lidarData.value[readMessage.sensorId - 1] = readMessage.message
-//                                        count.value += 1
-                                        if (readMessage.sensorId - 1 == 0) {
-                                            lidarData.value = intArrayOf(readMessage.message, lidarData.value[1], lidarData.value[2])
-                                        } else if (readMessage.sensorId - 1 == 1) {
-                                            lidarData.value = intArrayOf(lidarData.value[0], readMessage.message, lidarData.value[2])
-                                        } else {
-                                            lidarData.value = intArrayOf(lidarData.value[0], lidarData.value[1], readMessage.message)
+                                val readMessages = String(readBuffer, 0, msg.arg1 - 1).split("\n")
+                                for (message in readMessages) {
+                                    val bluetoothMessage = message.toBluetoothMessage()
+                                    if (bluetoothMessage.sensorId > 0) {
+                                        if ((bluetoothMessage.sensorId == 4) && (bluetoothMessage.message == 1)) {
+//                                            println("ml output 1")
+                                            showMlOutputToast()
+                                        } else if (bluetoothMessage.sensorId < 4) {
+                                            if (bluetoothMessage.sensorId - 1 == 0) {
+                                                lidarData.value = intArrayOf(bluetoothMessage.message, lidarData.value[1], lidarData.value[2])
+                                            } else if (bluetoothMessage.sensorId - 1 == 1) {
+                                                lidarData.value = intArrayOf(lidarData.value[0], bluetoothMessage.message, lidarData.value[2])
+                                            } else {
+                                                lidarData.value = intArrayOf(lidarData.value[0], lidarData.value[1], bluetoothMessage.message)
+                                            }
                                         }
-
+                                    } else {
+                                        println("dropped packet: ${bluetoothMessage}")
                                     }
-                                } else {
-//                                    println("dropped packet")
                                 }
                             }
                         }
