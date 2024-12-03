@@ -88,6 +88,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private val gyroFrequency = 150L  // Transmission frequency of gyro data in ms
     private var gyroData: FloatArray = floatArrayOf(0f, 0f, 0f)
+    private var theToast: Toast? = null
     private var connected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,8 +107,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                 val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
                                 if (readMessage.sensorId > 0) {
                                     if ((readMessage.sensorId == 4) && (readMessage.message == 1)) {
-                                        println("ml output 1")
-                                        Toast.makeText(this@MainActivity, "Pay attention to the road!", Toast.LENGTH_SHORT).show()
+//                                        println("ml output 1")
+                                        showMlOutputToast()
                                     } else if (readMessage.sensorId < 4) {
 //                                        println("${(readMessage.sensorId)}, ${(readMessage.message)}")
 //                                        Log.d("app_log","lidardata updated")
@@ -123,7 +124,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
                                     }
                                 } else {
-                                    println("dropped packet")
+//                                    println("dropped packet")
                                 }
                             }
                         }
@@ -168,9 +169,10 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
-                                connected = fa
+                                connected = false
                             } catch (e: SecurityException) {
                                 e.printStackTrace()
+                                connected = false
                             }
                         }
                     } else {
@@ -291,6 +293,15 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             }
         } else {
             println("No gyroscope available")
+        }
+    }
+
+    private fun showMlOutputToast() {
+        // Cancel any existing toast
+        theToast?.cancel()
+
+        theToast = Toast.makeText(this, "Pay attention to the road!", Toast.LENGTH_SHORT).apply {
+            show()
         }
     }
 
