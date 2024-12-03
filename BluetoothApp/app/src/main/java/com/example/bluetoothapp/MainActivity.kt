@@ -1,5 +1,6 @@
 package com.example.bluetoothapp
 
+import android.annotation.SuppressLint
 import com.example.bluetoothapp.ui.theme.BluetoothAppTheme
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -37,6 +38,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +57,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.bluetoothapp.domain.BluetoothService
 import com.example.bluetoothapp.domain.MESSAGE_READ
+import com.example.bluetoothapp.domain.ToastUtil
 import com.example.bluetoothapp.domain.toBluetoothMessage
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -84,6 +88,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private val gyroFrequency = 150L  // Transmission frequency of gyro data in ms
     private var gyroData: FloatArray = floatArrayOf(0f, 0f, 0f)
     private var theToast: Toast? = null
+    private var theOtherToast: ToastUtil? = null
     private var connected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,7 +108,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                     val bluetoothMessage = message.toBluetoothMessage()
                                     if (bluetoothMessage.sensorId > 0) {
                                         if ((bluetoothMessage.sensorId == 4) && (bluetoothMessage.message == 1)) {
-//                                            println("ml output 1")
                                             showMlOutputToast()
                                         } else if (bluetoothMessage.sensorId < 4) {
                                             if (bluetoothMessage.sensorId - 1 == 0) {
@@ -237,6 +241,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             println("Perms granted")
         }
         setupGyro()
+        theOtherToast = ToastUtil(this)
     }
 
     private fun allPermissionsGranted(): Boolean {
@@ -289,11 +294,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     }
 
     private fun showMlOutputToast() {
-        // Cancel any existing toast
-        theToast?.cancel()
-
-        theToast = Toast.makeText(this, "Pay attention to the road!", Toast.LENGTH_SHORT).apply {
-            show()
+        if (!theOtherToast?.isToastShowing()!!) {
+            theOtherToast!!.showToast("Pay attention to the road!")
         }
     }
 
