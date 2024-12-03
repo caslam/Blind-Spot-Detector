@@ -88,6 +88,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private val gyroFrequency = 150L  // Transmission frequency of gyro data in ms
     private var gyroData: FloatArray = floatArrayOf(0f, 0f, 0f)
+    private var connected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,10 +106,11 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                 val readMessage = String(readBuffer, 0, msg.arg1 - 1).toBluetoothMessage()
                                 if (readMessage.sensorId > 0) {
                                     if ((readMessage.sensorId == 4) && (readMessage.message == 1)) {
+                                        println("ml output 1")
                                         Toast.makeText(this@MainActivity, "Pay attention to the road!", Toast.LENGTH_SHORT).show()
                                     } else if (readMessage.sensorId < 4) {
-                                        println("${(readMessage.sensorId)}, ${(readMessage.message)}")
-                                        Log.d("app_log","lidardata updated")
+//                                        println("${(readMessage.sensorId)}, ${(readMessage.message)}")
+//                                        Log.d("app_log","lidardata updated")
 //                                        lidarData.value[readMessage.sensorId - 1] = readMessage.message
 //                                        count.value += 1
                                         if (readMessage.sensorId - 1 == 0) {
@@ -120,6 +122,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                         }
 
                                     }
+                                } else {
+                                    println("dropped packet")
                                 }
                             }
                         }
@@ -132,28 +136,45 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     }
                 }
                 fun connectToDevice(device: BluetoothDevice) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            bluetoothSocket = device.createRfcommSocketToServiceRecord(deviceUUID)
-                            bluetoothSocket?.connect()
-                            bluetoothService = BluetoothService(handler)
-                            if (bluetoothSocket == null) {
-                                println("BT socket was null")
-                            } else {
-                                bluetoothService.ConnectedThread(bluetoothSocket!!).start()
-                                handler.post(sendDataRunnable)
+                    if (!connected) {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                if (!connected) {
+                                    connected = true
+                                    bluetoothSocket =
+                                        device.createRfcommSocketToServiceRecord(deviceUUID)
+                                    bluetoothSocket?.connect()
+                                    bluetoothService = BluetoothService(handler)
+                                    if (bluetoothSocket == null) {
+                                        println("BT socket was null")
+                                    } else {
+                                        bluetoothService.ConnectedThread(bluetoothSocket!!).start()
+                                        handler.post(sendDataRunnable)
+                                    }
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Connected to HC-06",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            } catch (e: IOException) {
+                                e.printStackTrace()
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        "Connection failed",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                connected = fa
+                            } catch (e: SecurityException) {
+                                e.printStackTrace()
                             }
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(this@MainActivity, "Connected to HC-06", Toast.LENGTH_SHORT).show()
-                            }
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(this@MainActivity, "Connection failed", Toast.LENGTH_SHORT).show()
-                            }
-                        } catch (e: SecurityException) {
-                            e.printStackTrace()
                         }
+                    } else {
+                        Toast.makeText(this@MainActivity, "Already connected", Toast.LENGTH_SHORT).show()
                     }
                 }
                 fun setupBluetooth() {
@@ -199,8 +220,10 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         Button (onClick =  {
                             println("Disconnect clicked")
                             Log.d("app_log","disconnect clicked")
+                            Toast.makeText(this@MainActivity, "Disconnected", Toast.LENGTH_SHORT).show()
                             handler.removeCallbacks(sendDataRunnable)
                             bluetoothSocket?.close()
+                            connected = false
                         },
                             modifier = Modifier.padding(16.dp, 16.dp)
                         ) {
@@ -356,14 +379,14 @@ fun LRZones(l_state : Int, r_state: Int,
                     modifier = imageModifier,
                     contentDescription = null
                 )
-                Log.d("app_log","zone3 drawn")
+//                Log.d("app_log","zone3 drawn")
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.zone6),
                     modifier = imageModifier,
                     contentDescription = null
                 )
-                Log.d("app_log","zone6 drawn")
+//                Log.d("app_log","zone6 drawn")
             }
         }
         Box() {
@@ -378,14 +401,14 @@ fun LRZones(l_state : Int, r_state: Int,
                     modifier = imageModifier,
                     contentDescription = null
                 )
-                Log.d("app_log","zone1 drawn")
+//                Log.d("app_log","zone1 drawn")
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.zone4),
                     modifier = imageModifier,
                     contentDescription = null
                 )
-                Log.d("app_log","zone4 drawn")
+//                Log.d("app_log","zone4 drawn")
             }
         }
     }
@@ -404,14 +427,14 @@ fun CZone(modifier: Modifier = Modifier, c_state : Int) {
                 contentDescription = null,
                 modifier = imageModifier
             )
-            Log.d("app_log","zone2 drawn")
+//            Log.d("app_log","zone2 drawn")
         } else {
             Image(
                 painter = painterResource(id = R.drawable.zone5),
                 contentDescription = null,
                 modifier = imageModifier
             )
-            Log.d("app_log","zone5 drawn")
+//            Log.d("app_log","zone5 drawn")
         }
 
     }
