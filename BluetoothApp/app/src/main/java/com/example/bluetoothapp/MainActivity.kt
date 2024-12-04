@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             BluetoothAppTheme {
                 var count : MutableState<Int> = rememberSaveable { mutableIntStateOf(0) }
                 var lidarData : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
-                var bluetoothStatus : MutableState<String> = rememberSaveable { mutableStateOf("disconnected") }
+                var bluetoothStatus : MutableState<String> = rememberSaveable { mutableStateOf("Disconnected") }
                 val handler = object : Handler(Looper.getMainLooper()) {
                     override fun handleMessage(msg: Message) {
                         when (msg.what) {
@@ -155,7 +155,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                             "Connected to HC-06",
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                        bluetoothStatus.value = "connected to HC-06"
+                                        bluetoothStatus.value = "Connected to HC-06"
                                     }
                                 }
                             } catch (e: IOException) {
@@ -205,12 +205,12 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Top,
-                        modifier = Modifier) {
-                        Text("status: ${bluetoothStatus.value}")
+                        modifier = Modifier.padding(vertical = 80.dp)) {
+                        Text("Status: ${bluetoothStatus.value}")
                         Row (horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.Top,
                             modifier = Modifier.fillMaxWidth()
-                                .padding(vertical = 64.dp)) {
+                                .padding(vertical = 10.dp)) {
                             Button (onClick = {
                                 println("Connect clicked")
                                 Log.d("app_log","connect clicked")
@@ -224,7 +224,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                 println("Disconnect clicked")
                                 Log.d("app_log","disconnect clicked")
                                 Toast.makeText(this@MainActivity, "Disconnected", Toast.LENGTH_SHORT).show()
-                                bluetoothStatus.value = "disconnected"
+                                bluetoothStatus.value = "Disconnected"
                                 handler.removeCallbacks(sendDataRunnable)
                                 bluetoothSocket?.close()
                                 connected = false
@@ -322,13 +322,19 @@ fun UserName(modifier: Modifier = Modifier) {
         .size(200.dp)
         .padding(20.dp)
 //        .border(BorderStroke(1.dp, Color.Black))
-    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Top,
+        modifier = Modifier.padding(vertical = 290.dp)) {
         Column(
             modifier = imageModifier,
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             var username by remember { mutableStateOf("") }
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Enter name") }
+            )
             if (username == "david") {
                 Image(
                     painter = painterResource(id = R.drawable.david_pfp),
@@ -355,11 +361,6 @@ fun UserName(modifier: Modifier = Modifier) {
                     contentDescription = null
                 )
             }
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text("Enter name") }
-            )
         }
     }
 }
