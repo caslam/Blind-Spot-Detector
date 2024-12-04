@@ -98,6 +98,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             BluetoothAppTheme {
                 var count : MutableState<Int> = rememberSaveable { mutableIntStateOf(0) }
                 var lidarData : MutableState<IntArray> = rememberSaveable { mutableStateOf(intArrayOf(0,0,0)) }
+                var bluetoothStatus : MutableState<String> = rememberSaveable { mutableStateOf("disconnected") }
                 val handler = object : Handler(Looper.getMainLooper()) {
                     override fun handleMessage(msg: Message) {
                         when (msg.what) {
@@ -154,6 +155,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                             "Connected to HC-06",
                                             Toast.LENGTH_SHORT
                                         ).show()
+                                        bluetoothStatus.value = "connected to HC-06"
                                     }
                                 }
                             } catch (e: IOException) {
@@ -201,34 +203,42 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     color = MaterialTheme.colorScheme.background
 //                    color = Color.LightGray
                 ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Top,
+                        modifier = Modifier) {
+                        Text("status: ${bluetoothStatus.value}")
+                        Row (horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.Top,
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(vertical = 64.dp)) {
+                            Button (onClick = {
+                                println("Connect clicked")
+                                Log.d("app_log","connect clicked")
+                                setupBluetooth()
+                            },
+                                modifier = Modifier.padding(16.dp, 16.dp)
+                            ) {
+                                Text("Connect")
+                            }
+                            Button (onClick =  {
+                                println("Disconnect clicked")
+                                Log.d("app_log","disconnect clicked")
+                                Toast.makeText(this@MainActivity, "Disconnected", Toast.LENGTH_SHORT).show()
+                                bluetoothStatus.value = "disconnected"
+                                handler.removeCallbacks(sendDataRunnable)
+                                bluetoothSocket?.close()
+                                connected = false
+                            },
+                                modifier = Modifier.padding(16.dp, 16.dp)
+                            ) {
+                                Text("Disconnect")
+                            }
+                        }
+                        Box() {
 
-                    Row (horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.Top,
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(vertical = 64.dp)) {
-                        Button (onClick = {
-                            println("Connect clicked")
-                            Log.d("app_log","connect clicked")
-                            setupBluetooth()
-                        },
-                            modifier = Modifier.padding(16.dp, 16.dp)
-                        ) {
-                            Text("Connect")
                         }
-                        Button (onClick =  {
-                            println("Disconnect clicked")
-                            Log.d("app_log","disconnect clicked")
-                            Toast.makeText(this@MainActivity, "Disconnected", Toast.LENGTH_SHORT).show()
-                            handler.removeCallbacks(sendDataRunnable)
-                            bluetoothSocket?.close()
-                            connected = false
-                        },
-                            modifier = Modifier.padding(16.dp, 16.dp)
-                        ) {
-                            Text("Disconnect")
-                        }
+
                     }
-
                     LayoutScreen(lidarData, count)
                 }
             }
@@ -307,36 +317,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 }
 
 @Composable
-fun Person(username: String, modifier: Modifier = Modifier) {
-    val imageModifier = Modifier
-        .size(200.dp)
-        .padding(20.dp)
-//        .border(BorderStroke(1.dp, Color.Black))
-    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-        Column(
-            modifier = imageModifier,
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (username != "david") {
-                Icon(Icons.Filled.AccountCircle, contentDescription = null)
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.squirrelicon2),
-                    contentDescription = null,
-//                    modifier = Modifier.background(Color.Black)
-                )
-            }
-            if (username != "tyler") {
-                Text("$username")
-            } else {
-                Text("lol")
-            }
-        }
-    }
-}
-
-@Composable
 fun UserName(modifier: Modifier = Modifier) {
     val imageModifier = Modifier
         .size(200.dp)
@@ -349,13 +329,30 @@ fun UserName(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             var username by remember { mutableStateOf("") }
-            if (username != "david") {
-                Icon(Icons.Filled.AccountCircle, contentDescription = null)
+            if (username == "david") {
+                Image(
+                    painter = painterResource(id = R.drawable.david_pfp),
+                    contentDescription = null
+                )
+            } else if (username == "dat") {
+                Image(
+                    painter = painterResource(id = R.drawable.dat_pfp),
+                    contentDescription = null
+                )
+            } else if (username == "cassandra"){
+                Image(
+                    painter = painterResource(id = R.drawable.cassandra_pfp),
+                    contentDescription = null
+                )
+            } else if (username == "tyler") {
+                Image(
+                    painter = painterResource(id = R.drawable.tyler_pfp),
+                    contentDescription = null
+                )
             } else {
                 Image(
-                    painter = painterResource(id = R.drawable.squirrelicon2),
-                    contentDescription = null,
-//                    modifier = Modifier.background(Color.Black)
+                    painter = painterResource(id = R.drawable.generic_pfp),
+                    contentDescription = null
                 )
             }
             OutlinedTextField(
