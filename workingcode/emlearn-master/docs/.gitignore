@@ -1,7 +1,0 @@
-_build
-_static
-_templates
-auto_examples/
-
-doxygen/xml
-doxygen/html

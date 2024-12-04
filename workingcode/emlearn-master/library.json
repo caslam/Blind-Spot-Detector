@@ -1,8 +1,0 @@
-{
-    "name":"emlearn",
-    "version": "0.20.4",
-    "build": {
-        "srcDir": "emlearn",
-        "srcFilter": "+<*.h> -<arduino> -<evaluate> -<examples> -<platforms> -<preprocessing> -<templates> -<tools> -<utils>"
-    }
-}
