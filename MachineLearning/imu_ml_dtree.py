@@ -1,4 +1,6 @@
-# Tyler Sloan, EE 475 Group 5
+# Tyler Sloan
+# EE 475 Group 5
+# Takes in a collection of data and creates a decision-tree model. Saves that model as a .h file.
 
 import os
 import glob
@@ -10,7 +12,7 @@ import emlearn
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import joblib
 
 # REMEMBER TO CHANGE WHENEVER CREATING A NEW MODEL
@@ -179,7 +181,7 @@ def trainModel(saveToName):
     accuracy = accuracy_score(label_test, label_pred)
     print(f'Raw accuracy: {accuracy * 100:.2f}%')
 
-    # Lists a bunch of parameters with various values to test
+    # Lists a bunch of parameters with various values to test. Parameter values are manually selected.
     parameters = {
         'max_depth': [4, 8, 10, 12, None],
         'min_samples_split': [15, 19, 23, 25],
@@ -219,15 +221,6 @@ def trainModel(saveToName):
     joblib.dump(optimized_model, saveToName)
 
 
-# def predict(model_file, new_data):
-#     clf = joblib.load(model_file)
-
-#     # Predict the label for the new data
-#     label = clf.predict(new_data) # what should label be?
-#     if label == 1:
-#         print("Trigger alert: " + label)
-#     else:
-#         print("No alert: IMU returning or stationary")
 
 # Converts the model to C code, which enables it to exist on Arduino
 def convertToC(pkl_name, c_name):
@@ -241,7 +234,7 @@ def convertToC(pkl_name, c_name):
     emlearn_model.save(file=c_name, name='testModel')
 
 
-
+# main code
 
 print("\n")
 print("Current specifications:")

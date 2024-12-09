@@ -1,20 +1,23 @@
-# Tyler Sloan, EE 475 Group 5
+# Tyler Sloan
+# EE 475 Group 5
+# Separates blocks of data that were gathered during training into individual datasets. 
+# Used to train the model.
 
 import os
 import glob
-from datetime import datetime
+# from datetime import datetime
 
 
 def splitTextFiles(folderName):
     folder_path = os.path.join(os.path.dirname("imu_ml_dtree.py"), folderName)
     txt_files = glob.glob(os.path.join(folder_path, '*.txt'))
-    now = datetime.now()
+    # now = datetime.now()
 
     for file in txt_files:
-        print(os.path.basename(file)) # debug
+        # print(os.path.basename(file)) # debug
         splitFile(file, folder_path)
     
-    print(f"\nDone! {now.time()}")
+    # print(f"\nDone! {now.time()}")
 
 
 def splitFile(fileName, dir):
@@ -30,16 +33,16 @@ def splitFile(fileName, dir):
             line = line.strip()
             if line == "":  # New block starts after a blank line
                 # Write the current data block to a new file
-                if data_block:  # Skip empty blocks
+                if data_block:  # Skips empty blocks
                     output_filename = os.path.join(dir, f"{header}_{file_count}.txt")
                     with open(output_filename, 'w') as output_file:
                         output_file.write("\n".join(data_block))
                     file_count += 1
-                    data_block = []  # Clear data for the next block
+                    data_block = []  # Clears data for the next block
             else:
-                data_block.append(line)  # Add line to the current data block
+                data_block.append(line)  # Adds line to the current data block
 
-        # Write the last data block (if any)
+        # Write the last data block (if needed)
         if data_block:
             output_filename = os.path.join(dir, f"{header}{file_count}.txt")
             with open(output_filename, 'w') as output_file:

@@ -1,4 +1,7 @@
-# Tyler Sloan, EE 475 Group 5
+# Tyler Sloan
+# EE 475 Group 5
+# Takes in a block of data submitted into the terminal, formats it, and saves it to a unique file. 
+# Used to train the model. 
 
 import os
 import re
@@ -6,16 +9,15 @@ import re
 row_count = 12 # customize the number of rows of data the program accepts
 
 def writeFromTerminal(file_name, index, folder_path):
-    # waits for block of data to be inputted
+    # Waits for block of data to be inputted
     text_block = ""
     while (text_block == ""):
         text_block = input("Enter data block here: ").strip()
 
-    # isolates the floats in the text block and puts them into an array
+    # Isolates the floats in the text block and puts them into an array
     string_of_data = re.findall(r"-?\d+\.\d{6}", text_block)
     data_array_1D = [float(num) for num in string_of_data]
     number_of_rows = len(data_array_1D) // 6
-    # print(f"\n{data_array_1D}\n")
 
     if (number_of_rows != row_count):
         print(f"Found {number_of_rows} rows of data, not {row_count}.")
@@ -32,9 +34,10 @@ def writeFromTerminal(file_name, index, folder_path):
     print(f"File saved to \"{file_name}{index}.txt\".")
 
 
-
 # main code
-folder_path = os.path.join(os.path.dirname("imu_ml_dtree.py"), "txt_files_dtree2")
+
+# global variables
+folder_path = os.path.join(os.path.dirname("imu_ml_dtree.py"), "txt_files_dtree2") # Make sure these are to your liking
 files_created = []
 file_name = ""
 file_index = 1
@@ -42,7 +45,7 @@ file_index = 1
 print("\n")
 while True:
     file_name = input("Enter a file name prefix or (Q)uit: ").strip()
-    if (file_name == 'Q' or file_name == 'q'):
+    if (file_name == 'Q' or file_name == 'q'): # Quitting
         print("Done!")
         break
     elif (file_name in files_created):
@@ -51,30 +54,16 @@ while True:
         files_created.append(file_name)
         while True:
             confirm = input(f"Creating \"{file_name}{file_index}.txt\", \n(C)onfirm, (S)kip, (R)edo previous file, or (Q)uit? ").strip().upper()
-            if (confirm == 'Q'):
+            if (confirm == 'Q'): # Exits the loop and allows you to choose a different file name
                 file_index = 1
                 break
-            elif (confirm == 'C'):
+            elif (confirm == 'C'): # Confirms file creation process
                 if (writeFromTerminal(file_name, file_index, folder_path) == None):
                     file_index = file_index + 1
-            elif (confirm == 'R' and file_index > 1): # no files named '0'
+            elif (confirm == 'R' and file_index > 1): # Lets you retry the previous file. no files named '0'
                 print(f"Retrying \"{file_name}{file_index-1}.txt\":")
                 writeFromTerminal(file_name, file_index-1, folder_path)
-            elif (confirm == 'S'):
+            elif (confirm == 'S'): # Skips the current number. Useful if you have existing files with that name.
                 file_index = file_index + 1
     else:
         print("Invalid file name.")
-
-# old loop
-# while True:
-#     file_name = input("Enter \"file name\".txt (X to quit): ").strip()
-#     if (file_name == 'X' or file_name == 'x'):
-#         print("Done!")
-#         break
-#     elif (file_name in files_created):
-#         print("File already exists.")
-#     elif (len(file_name) > 0 and file_name not in files_created): # prevents saving to the same file
-#         writeFromTerminal(file_name, folder_path)
-#         files_created.append(file_name)
-#     else:
-#         print("Invalid file name.")

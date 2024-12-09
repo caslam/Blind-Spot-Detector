@@ -1,3 +1,6 @@
+// EE 475 Group 5
+// Main code for our Teensy 4.0
+
 #include <Wire.h>
 #include "FastIMU.h" 
 
@@ -79,9 +82,7 @@ void loop() {
 
   // Sends the copied and sorted FIFO into the model
   int32_t model_output = testModel_predict(gyroToModel, 3);
-  // if (model_output) {
-  //   Serial.println("model output");
-  // }
+
 
   // If the phone's gyro reports rate of rotation over threshold, set
   // flag to indicate that the bike is turning. Otherwise if the flag is
@@ -93,9 +94,6 @@ void loop() {
     turning = (turning > 0) ? (turning - 1) : 0;
   }
 
-  // if (turning) {
-  //   Serial.println("turning");
-  // }
 
   // Sends message to phone if model output is 1 and bike is not turning
   if (model_output && (!turning)) {
@@ -115,6 +113,7 @@ void loop() {
   delay(5);
 }
 
+// Updates the model input with new data
 void newModelInput() {
   // Computes the difference in gyro values
   // Phone data is 3 readings behind IMU data
@@ -132,8 +131,7 @@ void newModelInput() {
     gyroBuffer3[k] = gyroBuffer2[k];
     gyroBuffer2[k] = gyroBuffer1[k];
   }
-  Serial.printf("gyro[%f, %f, %f], phone[%f, %f, %f]\n", gyroBuffer3[0], gyroBuffer3[1], gyroBuffer3[2], phoneGyroData.gyroX, phoneGyroData.gyroY, phoneGyroData.gyroZ);
-
+  // Serial.printf("gyro[%f, %f, %f], phone[%f, %f, %f]\n", gyroBuffer3[0], gyroBuffer3[1], gyroBuffer3[2], phoneGyroData.gyroX, phoneGyroData.gyroY, phoneGyroData.gyroZ);
   gyroBuffer1[0] = (gyroData.gyroX - offsetX1)/9.0;
   gyroBuffer1[1] = (gyroData.gyroY - offsetY1)/9.0;
   gyroBuffer1[2] = (gyroData.gyroZ - offsetZ1)/9.0;
@@ -152,6 +150,7 @@ void sortFIFO() {
     }
 }
 
+// Reads incoming Bluetooth transmission and conifgures it to the Gyrodata object
 void printBluetoothData() {
   char buf[sizeof(float) * 4];
   float *f_buf = (float *)buf;
@@ -165,15 +164,15 @@ void printBluetoothData() {
   float checksum = f_buf[3];
 
   if (gyro_x + gyro_y + gyro_z == checksum) {
-    // Serial.printf(" bluetooth: %f, %f, %f\n", gyro_x, gyro_y, gyro_z);
     phoneGyroData.gyroX = gyro_x * 2;
     phoneGyroData.gyroY = gyro_y * 2;
     phoneGyroData.gyroZ = gyro_z * 2;
   } else {
-    // Serial.print("checksum failed");
+    Serial.print("checksum failed");
   }
   Serial.println();
 }
+
 
 void printGyroData() {
   // Update and retrieve gyro data from IMU 1
@@ -198,9 +197,9 @@ void printLidarData() {
   checkLidarData(Wire, previousDistance1,1);
   checkLidarData(Wire1, previousDistance2,2);
   checkLidarData(Wire2, previousDistance3,3);
-  // Serial.print("\n");
 }
 
+// Interprets the new Lidar reading and determines if there is an object approaching and if it's close enough to the user.
 void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
   uint8_t buf[2] = { 0 };
   uint8_t dat = 0xB0;
@@ -210,7 +209,6 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
   delay(50);
   readReg(0x02, buf, 2, Wire);
   distance = buf[0] * 0x100 + buf[1] + 10;
-  // Serial.printf("%4dmm\t", distance);
 
   // '10' is the output when a LIDAR sensor does not receive a reading. We manually change this to an arbitrarily high number.
   if (distance == 10) {
@@ -223,22 +221,16 @@ void checkLidarData(TwoWire& Wire, int &previousDistance, int sensor) {
     Serial1.printf("$0,%d\n", sensor); // No object detected
   }
 
-  
-
-  // Serial.printf("sensor: %d, %d, %d\n", sensor, previousDistance, distance);
   // Check for high change from the previous distance
   if ((previousDistance != 5000)  && ((previousDistance - distance) >= threshold)) {
-    Serial.printf("sensor: %d, %d -> %d\n", sensor, previousDistance, distance); // No object detected
+    // Serial.printf("sensor: %d, %d -> %d\n", sensor, previousDistance, distance); // No object detected
     tone(buzzerPin, 1000); // Buzz with 1000 Hz frequency
     delay(100); // Buzz duration
     noTone(buzzerPin);
-    // Serial.printf("sensor %d", sensor);
   }
 
-
-  previousDistance = distance;
   // Update previous distance
-  
+  previousDistance = distance;
 }
 
 
